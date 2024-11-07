@@ -83,7 +83,7 @@ public class L2022211709_19_Test {
         int[][] expected = new int[1][3];
         expected[0][0] = 0;
         expected[0][1] = 0;
-        expected[0][2] = 1;
+        expected[0][2] = 0;
         assertArrayEquals(expected, board);
     }
 

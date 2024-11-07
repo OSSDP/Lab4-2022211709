@@ -1,20 +1,47 @@
 name: tests
-on: push
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  pull-requests: write
+  contents: write
+
 jobs:
   run_tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
+
       - name: Set up JDK 22
         uses: actions/setup-java@v1
         with:
           java-version: 22
+
       - name: Cache Maven packages
         uses: actions/cache@v2
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
+
       - name: Run tests with Maven
         run: mvn -B test --file pom.xml
+
+  merge_pr:
+    needs: run_tests
+    if: ${{ needs.run_tests.result == 'success' && github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge pull request
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            })
